@@ -16,6 +16,7 @@ type option struct {
 var opt option
 
 func init() {
+	log.SetOutput(os.Stderr)
 	log.SetPrefix("tree:")
 	log.SetFlags(log.Lshortfile)
 
@@ -42,7 +43,11 @@ func run(root string) {
 	depLine := func(deps int) string {
 		str := ""
 		for i := 0; i != deps; i++ {
-			str += fmt.Sprintf(" - ")
+			str += " "
+			if deps-i == 1 {
+				str += fmt.Sprintf("- ")
+				break
+			}
 		}
 		return str
 	}
