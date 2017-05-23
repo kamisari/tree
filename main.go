@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,52 +9,36 @@ import (
 	"path/filepath"
 )
 
-type dirInfo struct {
-	infos []os.FileInfo
-	deps  int
+type option struct {
+	root string
 }
-type treeMAP map[string]dirInfo
 
-func try1(root string) {
-	tree := make(treeMAP)
-	//wg := new(sync.WaitGroup)
-	//mux := new(sync.Mutex)
-	var push func(string, int)
-	push = func(dir string, deps int) {
-		//defer wg.Done()
-		if _, ok := tree[dir]; ok {
-			return
-		}
-		if deps < 0 {
-			panic("invalid deps: deps < 0")
-		}
-		infos, err := ioutil.ReadDir(dir)
+var opt option
+
+func init() {
+	log.SetPrefix("tree:")
+	log.SetFlags(log.Lshortfile)
+
+	flag.StringVar(&opt.root, "root", "", "")
+	flag.Parse()
+	if flag.NArg() != 0 {
+		log.Fatal("invalid flag:", flag.Args())
+	}
+
+	var err error
+	if opt.root == "" {
+		opt.root, err = os.Getwd()
 		if err != nil {
-			return
+			log.Fatal(err)
 		}
-		tree[dir] = dirInfo{infos: infos, deps: deps}
-		for _, info := range infos {
-			if info.IsDir() {
-				//wg.Add(1)
-				//go push(filepath.Join(dir, info.Name()))
-				push(filepath.Join(dir, info.Name()), deps+1)
-			}
+		opt.root, err = filepath.Abs(opt.root)
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
-
-	//wg.Add(1)
-	push(root, 0)
-	//wg.Wait()
-
-	for key, di := range tree {
-		fmt.Println(key, "deps:", di.deps)
-		//		for _, info := range di.infos {
-		//			fmt.Println(info.Name())
-		//		}
 	}
 }
 
-func try2(root string) {
+func run(root string) {
 	depLine := func(deps int) string {
 		str := ""
 		for i := 0; i != deps; i++ {
@@ -97,19 +82,5 @@ func try2(root string) {
 }
 
 func main() {
-	log.SetPrefix("tree:")
-	log.SetFlags(log.Lshortfile)
-
-	root, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	root, err = filepath.Abs(root)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("root:", root)
-
-	//try1(root)
-	try2(root)
+	run(opt.root)
 }
