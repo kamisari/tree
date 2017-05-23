@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-const version = "0.2"
+const version = "0.3"
 
 type option struct {
 	root    string
@@ -24,28 +24,27 @@ func init() {
 	log.SetPrefix("tree:")
 	log.SetFlags(log.Lshortfile)
 
-	flag.StringVar(&opt.root, "root", "", "")
+	const lsep = string(filepath.ListSeparator)
+	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "")
-	flag.StringVar(&opt.ignore, "ignore", ".git", "list separatoer is '"+string(filepath.ListSeparator)+"'")
+	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore files, list separatoer is '"+lsep+"'")
 	flag.Parse()
-	if flag.NArg() != 0 {
-		log.Fatal("invalid flag:", flag.Args())
-	}
 	if opt.version {
 		fmt.Printf("version %s\n", version)
 		os.Exit(0)
 	}
+	if flag.NArg() != 0 {
+		if flag.NArg() == 1 {
+			opt.root = flag.Arg(0)
+		} else {
+			log.Fatal("invalid argument:", flag.Args())
+		}
+	}
 
 	var err error
-	if opt.root == "" {
-		opt.root, err = os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		opt.root, err = filepath.Abs(opt.root)
-		if err != nil {
-			log.Fatal(err)
-		}
+	opt.root, err = filepath.Abs(opt.root)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
