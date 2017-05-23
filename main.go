@@ -61,7 +61,7 @@ func run(root string, ignore string) {
 		return str
 	}
 
-	checkDir := func(dir string, ignoreList []string) bool {
+	isNotIgnore := func(dir string, ignoreList []string) bool {
 		for _, t := range ignoreList {
 			if dir == t {
 				return false
@@ -90,7 +90,7 @@ func run(root string, ignore string) {
 			return
 		}
 		for _, info := range infos {
-			if info.IsDir() && checkDir(info.Name(), filepath.SplitList(ignore)) {
+			if info.IsDir() && isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
 				tree += fmt.Sprintf("%s%s%c\n", depLine(deps), info.Name(), filepath.Separator)
 				deps++
 				push(filepath.Join(dir, info.Name()))
