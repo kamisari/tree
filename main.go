@@ -9,8 +9,12 @@ import (
 	"path/filepath"
 )
 
+const version = "0.2"
+
 type option struct {
-	root string
+	root    string
+	version bool
+	ignore  string
 }
 
 var opt option
@@ -21,9 +25,15 @@ func init() {
 	log.SetFlags(log.Lshortfile)
 
 	flag.StringVar(&opt.root, "root", "", "")
+	flag.BoolVar(&opt.version, "version", false, "")
+	flag.StringVar(&opt.ignore, "ignore", ".git", "list separatoer is '"+string(filepath.ListSeparator)+"'")
 	flag.Parse()
 	if flag.NArg() != 0 {
 		log.Fatal("invalid flag:", flag.Args())
+	}
+	if opt.version {
+		fmt.Printf("version %s\n", version)
+		os.Exit(0)
 	}
 
 	var err error
@@ -39,7 +49,7 @@ func init() {
 	}
 }
 
-func run(root string) {
+func run(root string, ignore string) {
 	depLine := func(deps int) string {
 		str := ""
 		for i := 0; i != deps; i++ {
@@ -52,11 +62,20 @@ func run(root string) {
 		return str
 	}
 
+	checkDir := func(dir string, ignoreList []string) bool {
+		for _, t := range ignoreList {
+			if dir == t {
+				return false
+			}
+		}
+		return true
+	}
+
 	checkDuple := make(map[string]bool)
 	tree := ""
-
 	deps := 0
 	var push func(string)
+
 	push = func(dir string) {
 		defer func() {
 			deps--
@@ -72,7 +91,7 @@ func run(root string) {
 			return
 		}
 		for _, info := range infos {
-			if info.IsDir() {
+			if info.IsDir() && checkDir(info.Name(), filepath.SplitList(ignore)) {
 				tree += fmt.Sprintf("%s%s%c\n", depLine(deps), info.Name(), filepath.Separator)
 				deps++
 				push(filepath.Join(dir, info.Name()))
@@ -81,11 +100,12 @@ func run(root string) {
 			tree += fmt.Sprintf("%s%s\n", depLine(deps), info.Name())
 		}
 	}
+
 	push(root)
 
 	fmt.Println(tree)
 }
 
 func main() {
-	run(opt.root)
+	run(opt.root, opt.ignore)
 }
