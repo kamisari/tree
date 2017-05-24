@@ -9,14 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/fatih/color"
 )
 
-const version = "0.7"
+const version = "0.8"
 
 type option struct {
 	root    string
 	version bool
 	ignore  string
+	noColor bool
 }
 
 var opt option
@@ -30,6 +33,7 @@ func init() {
 	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "")
 	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separatoer is '"+lsep+"'")
+	flag.BoolVar(&opt.noColor, "nocolor", false, "")
 	flag.Parse()
 	if opt.version {
 		fmt.Printf("version %s\n", version)
@@ -42,7 +46,7 @@ func init() {
 			log.Fatal("invalid argument:", flag.Args())
 		}
 	}
-
+	color.NoColor = opt.noColor
 	var err error
 	opt.root, err = filepath.Abs(opt.root)
 	if err != nil {
@@ -114,11 +118,13 @@ func run(root string, ignore string) (exitCode int) {
 		defer func() { deps-- }()
 		for _, info := range tree[dir] {
 			if info.IsDir() {
-				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
 				if isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
+					result = append(result, color.CyanString("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
 					deps++
 					pushResult(filepath.Join(dir, info.Name()))
+					continue
 				}
+				result = append(result, color.RedString("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
 				continue
 			}
 			result = append(result, fmt.Sprintf("%s%s", depLine(deps), info.Name()))
