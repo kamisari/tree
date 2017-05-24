@@ -113,7 +113,6 @@ func run(root string, ignore string) (exitCode int) {
 	var pushResult func(string)
 	pushResult = func(dir string) {
 		defer func(){deps--}()
-		log.Println("deps counter:", deps)
 		for _, info := range tree[dir] {
 			if info.IsDir() && isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
 				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
