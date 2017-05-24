@@ -7,9 +7,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 )
 
-const version = "0.4"
+const version = "gophers:0.5"
 
 type option struct {
 	root    string
@@ -49,6 +51,44 @@ func init() {
 }
 
 func run(root string, ignore string) (exitCode int) {
+	wg := new(sync.WaitGroup)
+	mux := new(sync.Mutex)
+	checkDuple := make(map[string]bool)
+	tree := make(map[string][]os.FileInfo)
+
+	var push func(string)
+	push = func(dir string) {
+		defer wg.Done()
+		mux.Lock()
+		if checkDuple[dir] {
+			mux.Unlock()
+			log.Println("ignore duplicate check:", dir)
+			return
+		}
+		checkDuple[dir] = true
+		mux.Unlock()
+		infos, err := ioutil.ReadDir(dir)
+		if err != nil {
+			log.Println(err)
+			exitCode = 3
+			return
+		}
+		mux.Lock()
+		tree[dir] = infos
+		mux.Unlock()
+		for _, info := range infos {
+			if info.IsDir() {
+				wg.Add(1)
+				go push(filepath.Join(dir, info.Name()))
+			}
+		}
+	}
+	wg.Add(1)
+	go push(root)
+	wg.Wait()
+
+
+	/// show
 	depLine := func(deps int) string {
 		str := ""
 		for i := 0; i != deps; i++ {
@@ -60,7 +100,6 @@ func run(root string, ignore string) (exitCode int) {
 		}
 		return str
 	}
-
 	isNotIgnore := func(dir string, ignoreList []string) bool {
 		for _, t := range ignoreList {
 			if dir == t {
@@ -69,41 +108,24 @@ func run(root string, ignore string) (exitCode int) {
 		}
 		return true
 	}
-
-	checkDuple := make(map[string]bool)
-	tree := ""
-	deps := 0
-	var push func(string)
-
-	push = func(dir string) {
-		defer func() {
-			deps--
-		}()
-		if checkDuple[dir] {
-			log.Println("ignore duplicate check:", dir)
-			return
-		}
-		checkDuple[dir] = true
-		infos, err := ioutil.ReadDir(dir)
-		if err != nil {
-			log.Println(err)
-			exitCode = 3
-			return
-		}
-		for _, info := range infos {
+	var deps int
+	var result []string
+	var pushResult func(string)
+	pushResult = func(dir string) {
+		defer func(){deps--}()
+		log.Println("deps counter:", deps)
+		for _, info := range tree[dir] {
 			if info.IsDir() && isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
-				tree += fmt.Sprintf("%s%s%c\n", depLine(deps), info.Name(), filepath.Separator)
+				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
 				deps++
-				push(filepath.Join(dir, info.Name()))
-				continue
+				pushResult(filepath.Join(dir, info.Name()))
 			}
-			tree += fmt.Sprintf("%s%s\n", depLine(deps), info.Name())
+			result = append(result, fmt.Sprintf("%s%s", depLine(deps), info.Name()))
 		}
 	}
 
-	push(root)
-
-	fmt.Println(tree)
+	pushResult(root)
+	fmt.Println(strings.Join(result, "\n"))
 	return
 }
 
