@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-const version = "0.3"
+const version = "0.4"
 
 type option struct {
 	root    string
