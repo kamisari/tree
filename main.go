@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-const version = "gophers"
+const version = "0.6"
 
 type option struct {
 	root    string
