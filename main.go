@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-const version = "0.6"
+const version = "0.7"
 
 type option struct {
 	root    string
@@ -29,7 +29,7 @@ func init() {
 	const lsep = string(filepath.ListSeparator)
 	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "")
-	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore files, list separatoer is '"+lsep+"'")
+	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separatoer is '"+lsep+"'")
 	flag.Parse()
 	if opt.version {
 		fmt.Printf("version %s\n", version)
@@ -113,10 +113,12 @@ func run(root string, ignore string) (exitCode int) {
 	pushResult = func(dir string) {
 		defer func() { deps-- }()
 		for _, info := range tree[dir] {
-			if info.IsDir() && isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
+			if info.IsDir() {
 				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
-				deps++
-				pushResult(filepath.Join(dir, info.Name()))
+				if isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
+					deps++
+					pushResult(filepath.Join(dir, info.Name()))
+				}
 				continue
 			}
 			result = append(result, fmt.Sprintf("%s%s", depLine(deps), info.Name()))
