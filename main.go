@@ -48,7 +48,7 @@ func init() {
 	}
 }
 
-func run(root string, ignore string) {
+func run(root string, ignore string) (exitCode int) {
 	depLine := func(deps int) string {
 		str := ""
 		for i := 0; i != deps; i++ {
@@ -87,6 +87,7 @@ func run(root string, ignore string) {
 		infos, err := ioutil.ReadDir(dir)
 		if err != nil {
 			log.Println(err)
+			exitCode = 3
 			return
 		}
 		for _, info := range infos {
@@ -103,8 +104,9 @@ func run(root string, ignore string) {
 	push(root)
 
 	fmt.Println(tree)
+	return
 }
 
 func main() {
-	run(opt.root, opt.ignore)
+	os.Exit(run(opt.root, opt.ignore))
 }
