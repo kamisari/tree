@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-const version = "gophers:0.5"
+const version = "gophers"
 
 type option struct {
 	root    string
@@ -87,7 +87,6 @@ func run(root string, ignore string) (exitCode int) {
 	go push(root)
 	wg.Wait()
 
-
 	/// show
 	depLine := func(deps int) string {
 		str := ""
@@ -112,7 +111,7 @@ func run(root string, ignore string) (exitCode int) {
 	var result []string
 	var pushResult func(string)
 	pushResult = func(dir string) {
-		defer func(){deps--}()
+		defer func() { deps-- }()
 		for _, info := range tree[dir] {
 			if info.IsDir() && isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
 				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
