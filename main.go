@@ -118,6 +118,7 @@ func run(root string, ignore string) (exitCode int) {
 				result = append(result, fmt.Sprintf("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
 				deps++
 				pushResult(filepath.Join(dir, info.Name()))
+				continue
 			}
 			result = append(result, fmt.Sprintf("%s%s", depLine(deps), info.Name()))
 		}
