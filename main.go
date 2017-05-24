@@ -79,8 +79,8 @@ func run(root string, ignore string) (exitCode int) {
 		defer func() {
 			deps--
 		}()
-		if _, ok := checkDuple[dir]; ok {
-			log.Println("duple check:", dir)
+		if checkDuple[dir] {
+			log.Println("ignore duplicate check:", dir)
 			return
 		}
 		checkDuple[dir] = true
