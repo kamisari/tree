@@ -32,7 +32,7 @@ func init() {
 	const lsep = string(filepath.ListSeparator)
 	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "")
-	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separatoer is '"+lsep+"'")
+	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separator is '"+lsep+"'")
 	flag.BoolVar(&opt.noColor, "nocolor", false, "")
 	flag.Parse()
 	if opt.version {
