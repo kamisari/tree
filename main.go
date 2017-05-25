@@ -94,11 +94,11 @@ func run(root string, ignore string) int {
 	wg.Wait()
 
 	/// show
-	depLine := func(deps int) string {
+	depLine := func(depth int) string {
 		str := ""
-		for i := 0; i != deps; i++ {
+		for i := 0; i != depth; i++ {
 			str += " "
-			if deps-i == 1 {
+			if depth-i == 1 {
 				str += fmt.Sprintf("- ")
 				break
 			}
@@ -113,23 +113,23 @@ func run(root string, ignore string) int {
 		}
 		return true
 	}
-	var deps int
+	var depth int
 	var result []string
 	var pushResult func(string)
 	pushResult = func(dir string) {
-		defer func() { deps-- }()
+		defer func() { depth-- }()
 		for _, info := range tree[dir] {
 			if info.IsDir() {
 				if isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
-					result = append(result, color.CyanString("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
-					deps++
+					result = append(result, color.CyanString("%s%s%c", depLine(depth), info.Name(), filepath.Separator))
+					depth++
 					pushResult(filepath.Join(dir, info.Name()))
 					continue
 				}
-				result = append(result, color.RedString("%s%s%c", depLine(deps), info.Name(), filepath.Separator))
+				result = append(result, color.RedString("%s%s%c", depLine(depth), info.Name(), filepath.Separator))
 				continue
 			}
-			result = append(result, fmt.Sprintf("%s%s", depLine(deps), info.Name()))
+			result = append(result, fmt.Sprintf("%s%s", depLine(depth), info.Name()))
 		}
 	}
 
