@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.9"
+const version = "0.10"
 
 type option struct {
 	root    string
@@ -54,9 +54,10 @@ func init() {
 	}
 }
 
-func run(root string, ignore string) (exitCode int) {
+func run(root string, ignore string) int {
 	wg := new(sync.WaitGroup)
 	mux := new(sync.Mutex)
+	exitCode := 0
 	checkDuple := make(map[string]bool)
 	tree := make(map[string][]os.FileInfo)
 
@@ -72,14 +73,12 @@ func run(root string, ignore string) (exitCode int) {
 		}
 		checkDuple[dir] = true
 		infos, err := ioutil.ReadDir(dir) // need mutex for countermove `too many open files`
-		mux.Unlock()
 		if err != nil {
-			log.Println(err)
 			exitCode = 3
+			mux.Unlock()
+			log.Println(err)
 			return
 		}
-
-		mux.Lock()
 		tree[dir] = infos
 		mux.Unlock()
 
@@ -136,7 +135,7 @@ func run(root string, ignore string) (exitCode int) {
 
 	pushResult(root)
 	fmt.Println(strings.Join(result, "\n"))
-	return
+	return exitCode
 }
 
 func main() {
