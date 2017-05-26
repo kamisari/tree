@@ -59,11 +59,9 @@ func init() {
 		log.Fatal(err)
 	}
 	if opt.nolog {
-		null, err := os.Open(os.DevNull)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.SetOutput(null)
+		log.SetFlags(0)
+		log.SetPrefix("")
+		log.SetOutput(ioutil.Discard)
 	}
 }
 
