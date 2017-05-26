@@ -13,13 +13,16 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.10"
+const version = "0.11"
 
 type option struct {
 	root    string
 	version bool
 	ignore  string
 	noColor bool
+	dirs    bool
+	full    bool
+	nolog   bool
 }
 
 var opt option
@@ -34,6 +37,9 @@ func init() {
 	flag.BoolVar(&opt.version, "version", false, "")
 	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separator is '"+lsep+"'")
 	flag.BoolVar(&opt.noColor, "nocolor", false, "")
+	flag.BoolVar(&opt.dirs, "dirs", false, "show directory only")
+	flag.BoolVar(&opt.full, "full", false, "full path")
+	flag.BoolVar(&opt.nolog, "nolog", false, "no error log output")
 	flag.Parse()
 	if opt.version {
 		fmt.Printf("version %s\n", version)
@@ -52,13 +58,19 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if opt.nolog {
+		null, err := os.Open(os.DevNull)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.SetOutput(null)
+	}
 }
 
-func run(root string, ignore string) int {
+func run(root string, ignore string, dirsonly bool, fullpath bool) int {
 	wg := new(sync.WaitGroup)
 	mux := new(sync.Mutex)
 	exitCode := 0
-	checkDuple := make(map[string]bool)
 	tree := make(map[string][]os.FileInfo)
 
 	var pushTree func(string)
@@ -66,12 +78,11 @@ func run(root string, ignore string) int {
 		defer wg.Done()
 
 		mux.Lock()
-		if checkDuple[dir] {
+		if _, ok := tree[dir]; ok {
 			mux.Unlock()
 			log.Println("ignore duplicate check:", dir)
 			return
 		}
-		checkDuple[dir] = true
 		infos, err := ioutil.ReadDir(dir) // need mutex for countermove `too many open files`
 		if err != nil {
 			exitCode = 3
@@ -105,39 +116,49 @@ func run(root string, ignore string) int {
 		}
 		return str
 	}
-	isNotIgnore := func(dir string, ignoreList []string) bool {
+	isIgnore := func(dir string, ignoreList []string) bool {
 		for _, t := range ignoreList {
 			if dir == t {
-				return false
+				return true
 			}
 		}
-		return true
+		return false
 	}
-	var depth int
 	var result []string
-	var pushResult func(string)
-	pushResult = func(dir string) {
-		defer func() { depth-- }()
+	var pushResult func(string, int)
+	pushResult = func(dir string, depth int) {
 		for _, info := range tree[dir] {
+			var path string
+			if fullpath {
+				path = filepath.Join(dir, info.Name())
+			} else {
+				path = depLine(depth) + info.Name()
+			}
 			if info.IsDir() {
-				if isNotIgnore(info.Name(), filepath.SplitList(ignore)) {
-					result = append(result, color.CyanString("%s%s%c", depLine(depth), info.Name(), filepath.Separator))
-					depth++
-					pushResult(filepath.Join(dir, info.Name()))
-					continue
+				if isIgnore(info.Name(), filepath.SplitList(ignore)) {
+					result = append(result, color.RedString("%s%c", path, filepath.Separator))
+				} else {
+					result = append(result, color.CyanString("%s%c", path, filepath.Separator))
+					pushResult(filepath.Join(dir, info.Name()), depth+1)
 				}
-				result = append(result, color.RedString("%s%s%c", depLine(depth), info.Name(), filepath.Separator))
 				continue
 			}
-			result = append(result, fmt.Sprintf("%s%s", depLine(depth), info.Name()))
+			if dirsonly {
+				continue
+			}
+			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+				result = append(result, color.GreenString("%s", path))
+			} else {
+				result = append(result, fmt.Sprintf("%s", path))
+			}
 		}
 	}
 
-	pushResult(root)
+	pushResult(root, 0)
 	fmt.Println(strings.Join(result, "\n"))
 	return exitCode
 }
 
 func main() {
-	os.Exit(run(opt.root, opt.ignore))
+	os.Exit(run(opt.root, opt.ignore, opt.dirs, opt.full))
 }
