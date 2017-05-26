@@ -19,7 +19,7 @@ type option struct {
 	root    string
 	version bool
 	ignore  string
-	noColor bool
+	nocolor bool
 	dirs    bool
 	full    bool
 	nolog   bool
@@ -36,7 +36,7 @@ func init() {
 	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "")
 	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory, list separator is '"+lsep+"'")
-	flag.BoolVar(&opt.noColor, "nocolor", false, "")
+	flag.BoolVar(&opt.nocolor, "nocolor", false, "")
 	flag.BoolVar(&opt.dirs, "dirs", false, "show directory only")
 	flag.BoolVar(&opt.full, "full", false, "full path")
 	flag.BoolVar(&opt.nolog, "nolog", false, "no error log output")
@@ -52,7 +52,7 @@ func init() {
 			log.Fatal("invalid argument:", flag.Args())
 		}
 	}
-	color.NoColor = opt.noColor
+	color.NoColor = opt.nocolor
 	var err error
 	opt.root, err = filepath.Abs(opt.root)
 	if err != nil {
