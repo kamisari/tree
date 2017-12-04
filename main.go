@@ -15,7 +15,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.13"
+const version = "0.13.0"
 
 // exit code
 const (
