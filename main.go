@@ -15,7 +15,12 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.13.0"
+const version = "0.13.1"
+
+var ignoreList = []string{
+	".git",
+	".cache",
+}
 
 // exit code
 const (
@@ -43,7 +48,7 @@ func init() {
 	flag.StringVar(&opt.root, "root", "", "tree top")
 	flag.BoolVar(&opt.version, "version", false, "print version")
 	flag.BoolVar(&opt.verbose, "verbose", true, "with error log")
-	flag.StringVar(&opt.ignore, "ignore", ".git"+lsep+".cache", "ignore directory. list separator is '"+lsep+"'")
+	flag.StringVar(&opt.ignore, "ignore", strings.Join(ignoreList, lsep), "ignore directory. list separator is '"+lsep+"'")
 	flag.BoolVar(&opt.nocolor, "nocolor", false, "no color")
 	flag.BoolVar(&opt.dirs, "dirs", false, "show directory only")
 	flag.BoolVar(&opt.full, "full", false, "full path")
