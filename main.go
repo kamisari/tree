@@ -15,7 +15,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.13.1"
+const version = "0.14.1"
 
 var ignoreList = []string{
 	".git",
@@ -39,6 +39,7 @@ type option struct {
 	full    bool
 	abort   bool
 	total   bool
+	count bool
 }
 
 var opt = &option{}
@@ -54,6 +55,7 @@ func init() {
 	flag.BoolVar(&opt.full, "full", false, "full path")
 	flag.BoolVar(&opt.abort, "abort", false, "if find error then abort process")
 	flag.BoolVar(&opt.total, "total", false, "prints total number of files and directories")
+	flag.BoolVar(&opt.count, "count", false, "print only number of counter of files and dirs")
 	flag.Parse()
 	if flag.NArg() != 0 {
 		if flag.NArg() == 1 && opt.root == "" {
@@ -246,7 +248,13 @@ func run(w, errw io.Writer, opt *option) int {
 		}
 	}
 	pushResult(opt.root, 0)
-	_, err := fmt.Fprintln(w, strings.Join(result, "\n"))
+	var err error
+	// TODO: fix opt.count
+	if !opt.count {
+		_, err = fmt.Fprintln(w, strings.Join(result, "\n"))
+	} else {
+		_, err = fmt.Fprintf(w, "\ndirectory %d\nfile %d\n", ndirs, nfiles)
+	}
 	if opt.total {
 		_, err = fmt.Fprintf(w, "\ndirectory %d\nfile %d\n", ndirs, nfiles)
 	}
