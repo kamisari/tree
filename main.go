@@ -15,7 +15,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "0.14.1"
+const version = "0.14.2"
 
 var ignoreList = []string{
 	".git",
@@ -130,12 +130,9 @@ func walk(root string, logger *log.Logger) (tree map[string][]os.FileInfo, exitC
 	}()
 
 	// worker
-	maxWorker := runtime.NumCPU()
-	if maxWorker < 1 {
-		maxWorker = 1
-	}
-	goCounter += maxWorker
-	for i := 0; i < maxWorker; i++ {
+	maxWorker := runtime.NumCPU() / 2
+	for i := 0; i <= maxWorker; i++ {
+		goCounter += maxWorker
 		go func() {
 			for {
 				select {
