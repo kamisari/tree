@@ -39,7 +39,7 @@ type option struct {
 	full    bool
 	abort   bool
 	total   bool
-	count bool
+	count   bool
 }
 
 var opt = &option{}
